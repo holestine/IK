@@ -1,0 +1,5 @@
+pandas
+vit_pytorch
+matplotlib
+tensorboard
+torch-tb-profiler

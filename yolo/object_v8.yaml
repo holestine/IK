@@ -1,0 +1,7 @@
+# Train and test folders
+train: 'train'
+val: 'test'
+
+# Number of classes
+nc: 2
+names: ['circle', 'triangle']

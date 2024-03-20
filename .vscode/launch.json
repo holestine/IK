@@ -1,0 +1,32 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python Debugger: Train YOLO",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "yolo/train_yolo.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python Debugger: Experiments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "experiments.py",
+            "console": "integratedTerminal",
+            "args": [
+
+            ]
+        }
+    ]
+}
