@@ -1,3 +1,9 @@
+# For YOLO
+pandas 
+opencv-python
+ultralytics
+
+# For Models
 pandas
 vit_pytorch
 matplotlib

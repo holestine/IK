@@ -12,21 +12,36 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Python Debugger: Train YOLO",
+            "name": "Python Debugger: Model Demo",
             "type": "debugpy",
             "request": "launch",
-            "program": "yolo/train_yolo.py",
+            "cwd": "${workspaceFolder}/model_demo",
+            "program": "demo.py",
+            "console": "integratedTerminal",
+        },
+        {
+            "name": "Python Debugger: Prepare Dataset",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/yolo",
+            "program": "create_dataset.py",
             "console": "integratedTerminal"
         },
         {
-            "name": "Python Debugger: Experiments",
+            "name": "Python Debugger: Train YOLO",
             "type": "debugpy",
             "request": "launch",
-            "program": "experiments.py",
-            "console": "integratedTerminal",
-            "args": [
-
-            ]
+            "cwd": "${workspaceFolder}/yolo",
+            "program": "train_yolo.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python Debugger: Run YOLO",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/yolo",
+            "program": "run_yolo.py",
+            "console": "integratedTerminal"
         }
     ]
 }
