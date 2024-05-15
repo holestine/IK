@@ -1,10 +1,13 @@
 # Introduction
-These are assets that I've created for [Interview Kickstart](https://learn.interviewkickstart.com/) where I teach and create content for various Deep Learning courses.
+These are assets that I've created for [Interview Kickstart](https://learn.interviewkickstart.com/) where I teach and create content for various Machine Learning courses.
 
 ## Create the environment
+
+```
 conda create -c pytorch -c nvidia -n ik pytorch torchvision torchaudio pytorch-cuda=11.8
 conda activate ik
 pip install -r requirements.txt
+```
 
 ## Relevant Files
 
