@@ -23,15 +23,18 @@ class Timer(ContextDecorator):
         self.end = time.time()  
         self.time_tracker[self.phase]['times'].append(self.end - self.start)  
 
-    def report_phase(self, phase, times): 
-        print(f'{phase} ran {len(times)} times')  
-        #print(f'\tTimes: {times}' ) 
+    def report_phase(self, phase, times, print_all_times=False): 
+        print(f'{phase} ran {len(times)} times')
+        
+        if print_all_times:
+            print(f'\tTimes: {times}' ) 
+        
         print(f'\tMin time was {1000 * np.min(times)} at index {times.index(np.min(times))}')  
         print(f'\tMax time was {1000 * np.max(times)} at index {times.index(np.max(times))}') 
         print(f'\tAverage time was {1000 * np.mean(times)} ms')  
         print(f'\tTotal time was {1000 * np.sum(times)} ms\n')
 
-    def report_phases(self, filename=None):
+    def report(self, filename=None):
         if filename:
             data = []
 
@@ -43,12 +46,12 @@ class Timer(ContextDecorator):
         if filename:
             pd.DataFrame(data, columns=['Name', 'Min', 'Max', 'Mean', 'Total']).to_csv(filename, index=False)
 
-    def get_phases(self):
-        phases = {}
+    def times(self):
+        time = {}
         for phase, times in self.time_tracker.items():
-            phases[phase] = 1000 * np.mean(times['times'])
+            time[phase] = 1000 * np.mean(times['times'])
             
-        return phases
+        return time
 
     def reset(self):
         self.time_tracker.clear()
@@ -70,7 +73,7 @@ def main():
         with Timer(phase):
             time.sleep(.3)
 
-    Timer().report_phases('timer_1.csv')
+    Timer().report('timer_1.csv')
 
     Timer().reset()
 
@@ -79,7 +82,7 @@ def main():
         with Timer(phase) as timer:
             time.sleep(.4)
 
-    Timer().report_phases('timer_2.csv')
+    Timer().report('timer_2.csv')
 
 if __name__ == '__main__':
     main()

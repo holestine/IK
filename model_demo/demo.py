@@ -17,13 +17,37 @@ LOG_DIR = "./logs/tb"
 
 DEFAULT_EPOCHS = 15
 
-DATASETS    = ["MNIST"] 
-MODEL_TYPES = ["CNN"]
-#DATASETS    = ["MNIST", "CIFAR10", "CIFAR100"] 
-#MODEL_TYPES = ["MLP", "CNN", "ViT", "HYBRID"]
+#DATASETS    = ["MNIST"] 
+#MODEL_TYPES = ["CNN"]
+DATASETS    = ["MNIST", "CIFAR10", "CIFAR100"] 
+MODEL_TYPES = ["MLP", "CNN", "ViT", "HYBRID"]
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+class MLPNet(nn.Module):
+    def __init__(self, image_size, num_classes, channels):
+        super(MLPNet, self).__init__()
+        
+        self.fc1 = nn.Linear(image_size * channels, 128)
+        self.fc2 = nn.Linear(128, 256)
+        self.fc3 = nn.Linear(256, 128)
+        self.fc4 = nn.Linear(128, num_classes)
+        self.dropout = nn.Dropout(0.25)
+
+    def forward(self, x):
+        x = torch.flatten(x, 1)
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.dropout(x)
+        x = self.fc2(x)
+        x = self.dropout(x)
+        x = self.fc3(x)
+        x = self.dropout(x)
+        x = self.fc4(x)
+
+        output = F.log_softmax(x, dim=1)
+        return output  
 
 class CNNNet(nn.Module):
     def __init__(self, num_classes, channels, image_height, image_width):
@@ -63,30 +87,6 @@ class CNNNet(nn.Module):
 
         output = F.log_softmax(x, dim=1)
         return output
-
-class MLPNet(nn.Module):
-    def __init__(self, image_size, num_classes, channels):
-        super(MLPNet, self).__init__()
-        
-        self.fc1 = nn.Linear(image_size * channels, 128)
-        self.fc2 = nn.Linear(128, 256)
-        self.fc3 = nn.Linear(256, 128)
-        self.fc4 = nn.Linear(128, num_classes)
-        self.dropout = nn.Dropout(0.25)
-
-    def forward(self, x):
-        x = torch.flatten(x, 1)
-        x = self.fc1(x)
-        x = F.relu(x)
-        x = self.dropout(x)
-        x = self.fc2(x)
-        x = self.dropout(x)
-        x = self.fc3(x)
-        x = self.dropout(x)
-        x = self.fc4(x)
-
-        output = F.log_softmax(x, dim=1)
-        return output  
 
 class ViTNet(nn.Module): 
     def __init__(self, image_size, patch_size, num_classes, channels):
@@ -237,6 +237,7 @@ def main(args):
             transform=transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+                #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2434, 0.2616))
             ])
             train_set = datasets.CIFAR10('./data', train=True, download=True, transform=transform)
             test_set = datasets.CIFAR10('./data', train=False, transform=transform)
@@ -293,9 +294,9 @@ def main(args):
             if args.save_model:
                 torch.save(model.state_dict(), "{}_{}.pt".format(model_type, dataset))
 
-    #Timer().report_phases()
+    #Timer().report()
 
-    times = Timer().get_phases()
+    times = Timer().time()
     fig, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
     bar_colors = ['tab:red', 'tab:green', 'tab:blue', 'tab:orange']
     ax1.bar(list(times.keys()), list(times.values()), color=bar_colors)
