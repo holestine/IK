@@ -6,3 +6,6 @@ conda create -c pytorch -c nvidia -n ik pytorch torchvision torchaudio pytorch-c
 conda activate ik
 pip install -r requirements.txt
 
+## Relevant Files
+
+[yolo.ipynb](yolo/yolo.ipynb 'yolo.ipynb')
