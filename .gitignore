@@ -166,3 +166,5 @@ model_demo/logs
 *.pt
 data/
 logs/
+*.mp4
+

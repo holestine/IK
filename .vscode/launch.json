@@ -42,6 +42,14 @@
             "cwd": "${workspaceFolder}/yolo",
             "program": "run_yolo.py",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Python Debugger: Tracking",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/tracking",
+            "program": "tracking.py",
+            "console": "integratedTerminal"
         }
     ]
 }
