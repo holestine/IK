@@ -1,13 +1,9 @@
-import pickle
-import matplotlib.pyplot as plt
-from ultralytics import YOLO
 import numpy as np
 import os, cv2
 from scipy.optimize import linear_sum_assignment
 
-class video:
-
-    def __init__(self, out_dir, filename, fps=5, width=1200, height=800, is_rgb=True) -> None:
+class video_editor:
+    def __init__(self, out_dir, filename, fps=30, width=1200, height=800, is_rgb=True) -> None:
         '''
         Creates a video 
     
@@ -26,7 +22,7 @@ class video:
         is_rgb : bool
             Flag to specify whether or not the video will be in color
         '''
-        
+
         # Make sure directory is there
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
@@ -46,7 +42,7 @@ class video:
         img : array(int)
             The image
         '''
-        
+
         self.out.write(img)
 
     def save_video(self):
@@ -56,9 +52,29 @@ class video:
 
         self.out.release()
 
+    def drawPred(self, classes, frame, classId, conf, left, top, right, bottom, color=(255, 0, 0)):
+        '''
+        Draw a bounding box around a detected object given the box coordinates
+        Later, we could repurpose that to display an ID
+        '''
+
+        # Draw a bounding box.
+        cv2.rectangle(frame, (left, top), (right, bottom), color, thickness=5)
+        label = '%.2f' % conf
+        # Get the label for the class name and its confidence
+        if classes:
+            assert(classId < len(classes))
+            label = '%s:%s' % (classes[classId], label)
+
+        #Display the label at the top of the bounding box
+        labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+        top = max(top, labelSize[1])
+        cv2.putText(frame, label, (left, top), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), thickness=3)
+        return frame
 
 class trajectory:
     current_id = 1
+
     def __init__(self, box, confidence, type) -> None:
 
         self.id = trajectory.current_id
@@ -76,8 +92,8 @@ class trajectory:
         Do what you want here but keep numbers below 255
         """
         blue  = id*107 % 256
-        green = id*149 %256
-        red   = id*227 %256
+        green = id*149 % 256
+        red   = id*227 % 256
         return (red, green, blue)
 
 class yolo_detection:
@@ -87,32 +103,14 @@ class yolo_detection:
         self.confidence = confidence
         self.type = type
 
-class tracker:
+class bb_tracker:
     
     def __init__(self) -> None:
         self.confThreshold = 0.5
         self.nmsThreshold = 0.8
         self.iou_threshold = 0.3
+        self.max_missed_detections = 3
         self.trajectories = []
-
-    def drawPred(self, classes, frame, classId, conf, left, top, right, bottom):
-        '''
-        Draw a bounding box around a detected object given the box coordinates
-        Later, we could repurpose that to display an ID
-        '''
-        # Draw a bounding box.
-        cv2.rectangle(frame, (left, top), (right, bottom), (255, 0, 0), thickness=5)
-        label = '%.2f' % conf
-        # Get the label for the class name and its confidence
-        if classes:
-            assert(classId < len(classes))
-            label = '%s:%s' % (classes[classId], label)
-
-        #Display the label at the top of the bounding box
-        labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
-        top = max(top, labelSize[1])
-        cv2.putText(frame, label, (left, top), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), thickness=3)
-        return frame
 
     def process_yolo_result(self, yolo_result):
 
@@ -165,8 +163,8 @@ class tracker:
 
         # Nothing to associate, add missed detection to all trajectories
         if len(detections) == 0:
-            for traj in self.trajectories:
-                traj.missed_detections += 1
+            for t in self.trajectories:
+                t.missed_detections += 1
             return
 
         # Nothing to match so just create new trajectories
@@ -196,66 +194,63 @@ class tracker:
         hungarian_row, hungarian_col = linear_sum_assignment(-iou_matrix)
         hungarian_matrix = np.array(list(zip(hungarian_row, hungarian_col)))
 
-        # Create new unmatched lists for old and new boxes
-        matches, unmatched_detections, unmatched_trackers = [], [], []
-
         # Go through the matches in the Hungarian Matrix 
         for h in hungarian_matrix:
             # If it's under the IOU threshold increment the missed detections in the tracker and add a new trajectory
             if(iou_matrix[h[0],h[1]] < self.iou_threshold):
-                unmatched_trackers.append(old_boxes[h[0]])
-                self.trajectories[h[0]].missed_detections += 1 #############
-
-                unmatched_detections.append(new_boxes[h[1]])
+                self.trajectories[h[0]].missed_detections += 1
                 detection = detections[h[1]]
                 t = trajectory(detection.box, detection.confidence, detection.type)
                 self.trajectories.append(t)
             # Else, it's a match, add the box to the trajectory
             else:
-                matches.append(h.reshape(1,2))
-        
-        if(len(matches)==0):
-            matches = np.empty((0,2), dtype=int)
-        else:
-            matches = np.concatenate(matches,axis=0)
-
-        # Add matched bounding boxes to the trajectories
-        for match in matches:
-            self.trajectories[match[0]].boxes.append(detections[match[1]].box)
-            self.trajectories[match[0]].consecutive_detections += 1
-        
-        # Go through old boxes, if no matched detection, add it to the unmatched_old_boxes
-        for t, box in enumerate(old_boxes):
+                self.trajectories[h[0]].boxes.append(detections[h[1]].box)
+                self.trajectories[h[0]].consecutive_detections = max(1, self.trajectories[h[0]].consecutive_detections+1)
+                self.trajectories[h[0]].missed_detections = 0
+               
+        # Remove trajectories that age out
+        trajectories_to_remove = []
+        for t, _ in enumerate(old_boxes):
             if(t not in hungarian_matrix[:,0]):
-                unmatched_trackers.append(box)
-                self.trajectories[t].missed_detections += 1
+                if self.trajectories[t].missed_detections < self.max_missed_detections:
+                    self.trajectories[t].missed_detections += 1
+                else:
+                    trajectories_to_remove.append(self.trajectories[t])
+                    
+        for t in trajectories_to_remove:
+            self.trajectories.remove(t)
         
-        # Go through new boxes, if no matched tracking, add it to the unmatched_new_boxes
-        for d, det in enumerate(new_boxes):
-            if(d not in hungarian_matrix[:,1]):
-                unmatched_detections.append(det)
-
+        # Add new trajectories for unmatched detections
         new_boxes = [detection.box for detection in detections]
         for d, det in enumerate(detections):
             if(d not in hungarian_matrix[:,1]):
-                t = trajectory(det.box, det.confidence, detection.type)
+                t = trajectory(det.box, det.confidence, det.type)
                 self.trajectories.append(t)
-        
-        print("Matched Detections")
-        for match in matches:
-            print(self.trajectories[match[0]].boxes[-2])
-            print(detections[match[1]].box)
-            print('\n')
-        
-        print("\nUnmatched Detections ")
-        print(np.array(unmatched_detections))
-        
-        print("\nUnmatched trackers ")
-        print(np.array(unmatched_trackers))
 
         return
+    
+    def get_matches(self):
+        '''
+        
+        '''
+
+        boxes, confidences, classes, colors = [], [], [], []
+        
+        for t in self.trajectories:
+            if t.consecutive_detections >= 1:
+                boxes.append(t.boxes[-1])
+                confidences.append(t.confidences[-1])
+                classes.append(t.type)
+                colors.append(t.color)
+        
+        return boxes, confidences, classes, colors
 
     def print_matches(self):
+        '''
+        Prints all the matches detected in the last update. They can be identified by 
+        trajectories that have multiple bounding boxes and zero missed detections.
+        '''
+
         print("Matched Detections:")
         for t in self.trajectories:
             if len(t.boxes) > 1:
@@ -265,14 +260,23 @@ class tracker:
                     print('\n')
 
     def print_unmatched_trackers(self):
+        '''
+        Prints all the unmatched trackers from the last update. They can be identified by 
+        trajectories that have missed detections greater than zero.
+        '''
+
         print("Unmatched Trackers:")
         for t in self.trajectories:
-            if len(t.boxes) > 0:
-                if t.missed_detections > 0:
-                    print(t.boxes[-1])
-                    print('\n')
+            if t.missed_detections > 0:
+                print(t.boxes[-1])
+                print('\n')
 
     def print_unmatched_detections(self):
+        '''
+        Prints all the unmatched detections from the last update. They can be identified by 
+        trajectories that only one bounding boxes and zero missed detections.
+        '''
+        
         print("Unmatched Detections:")
         for t in self.trajectories:
             if len(t.boxes) == 1:
@@ -280,39 +284,3 @@ class tracker:
                     print(t.boxes[-1])
                     print('\n')
 
-    
-
-
-YOLO_MODEL = 'yolov8n'
-
-model = YOLO('{}.pt'.format(YOLO_MODEL))
-
-result_boxes  = [] # Empty list for output boxes
-
-# Load some images
-dataset_images = pickle.load(open('Images/images_tracking.p', "rb"))
-
-tracker = tracker()
-video = video('out', 'video.mp4', width=dataset_images[0].shape[1], height=dataset_images[0].shape[0])
-
-for img in dataset_images:
-    # Detect objects with YOLO
-    yolo_result = model.predict(img)
-    
-    boxes, confidences, classes = tracker.process_yolo_result(yolo_result)
-
-    tracker.print_matches()
-    tracker.print_unmatched_trackers()
-    tracker.print_unmatched_detections()
-
-    for box, confidence, type in zip(boxes, confidences, classes):
-        left   = int(box[0])
-        top    = int(box[1])
-        right  = int(box[2])
-        bottom = int(box[3])
-        img = tracker.drawPred(yolo_result[0].names, img, type, confidence, left, top, right, bottom)
-        
-    video.add_frame(img)
-        
-
-video.save_video()

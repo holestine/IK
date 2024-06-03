@@ -163,8 +163,9 @@ yolo/datasets
 yolo/runs
 model_demo/data
 model_demo/logs
+tracking/videos/*
 *.pt
 data/
 logs/
 *.mp4
-
+*.p
