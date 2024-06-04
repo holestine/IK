@@ -26,5 +26,4 @@ This script simply prints out a TensorFlow model summary which is used in the cu
 ### [tracker.py](tracking/tracker.py)
 
 
-
-https://www.youtube.com/watch?v=e8OLSGrHxyA
+<video src='https://www.youtube.com/watch?v=e8OLSGrHxyA' width=720/>
