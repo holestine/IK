@@ -24,8 +24,6 @@ This is a Jupyter notebook that shows how to create classification models using 
 This script simply prints out a TensorFlow model summary which is used in the curriculum to show the layers that are produced for different lines of code.
 
 ### [tracker.py](tracking/tracker.py)
-
+This code combines YOLO detections with the Hungarian algorithm to track objects.
 
 [![Watch the video](https://img.youtube.com/vi/e8OLSGrHxyA/hqdefault.jpg)](https://www.youtube.com/watch?v=e8OLSGrHxyA)
-
-
