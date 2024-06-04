@@ -105,8 +105,10 @@ class yolo_detection:
 
 class bb_tracker:
     
+    min_consecutive_detections = 3
+    
     def __init__(self) -> None:
-        self.confThreshold = 0.5
+        self.confThreshold = 0.2
         self.nmsThreshold = 0.8
         self.iou_threshold = 0.3
         self.max_missed_detections = 3
@@ -134,9 +136,6 @@ class bb_tracker:
 
         self.associate(detections)
 
-
-        return filtered_boxes_xyxy[indices], filtered_confidences[indices], filtered_classes[indices]
-
     def box_iou(self, box1, box2):
         xA = max(box1[0], box2[0]) # The max left hand side
         yA = max(box1[1], box2[1]) # The max of the top
@@ -154,18 +153,13 @@ class bb_tracker:
         iou = inter_area/float(union_area)
         return iou
 
+    def remove_old_trajectories(self):
+        return
+
     def associate(self, detections):
         """
-        old_boxes will represent the former bounding boxes (at time 0)
-        new_boxes will represent the new bounding boxes (at time 1)
-        Function goal: Define a Hungarian Matrix with IOU as a metric and return, for each box, an id
+        
         """
-
-        # Nothing to associate, add missed detection to all trajectories
-        if len(detections) == 0:
-            for t in self.trajectories:
-                t.missed_detections += 1
-            return
 
         # Nothing to match so just create new trajectories
         if len(self.trajectories) == 0:
@@ -173,10 +167,10 @@ class bb_tracker:
                 t = trajectory(detection.box, detection.confidence, detection.type)
                 self.trajectories.append(t)
             return
-        
+
         # Get the last know location for each trajectory
         old_boxes = [t.boxes[-1] for t in self.trajectories]
-
+                         
         # Get the location of all the new detections
         new_boxes = [detection.box for detection in detections]
 
@@ -184,7 +178,6 @@ class bb_tracker:
         iou_matrix = np.zeros((len(old_boxes), len(new_boxes)), dtype=np.float32)
 
         # Go through all the boxes and store each IOU value
-        # TODO: do this by class type
         for i, old_box in enumerate(old_boxes):
             for j, new_box in enumerate(new_boxes):
                 iou_matrix[i][j] = self.box_iou(old_box, new_box)
@@ -197,7 +190,7 @@ class bb_tracker:
         # Go through the matches in the Hungarian Matrix 
         for h in hungarian_matrix:
             # If it's under the IOU threshold increment the missed detections in the tracker and add a new trajectory
-            if(iou_matrix[h[0],h[1]] < self.iou_threshold):
+            if iou_matrix[h[0],h[1]] < self.iou_threshold or self.trajectories[h[0]].type != detections[h[1]].type:
                 self.trajectories[h[0]].missed_detections += 1
                 detection = detections[h[1]]
                 t = trajectory(detection.box, detection.confidence, detection.type)
@@ -208,41 +201,41 @@ class bb_tracker:
                 self.trajectories[h[0]].consecutive_detections = max(1, self.trajectories[h[0]].consecutive_detections+1)
                 self.trajectories[h[0]].missed_detections = 0
                
-        # Remove trajectories that age out
-        trajectories_to_remove = []
-        for t, _ in enumerate(old_boxes):
-            if(t not in hungarian_matrix[:,0]):
-                if self.trajectories[t].missed_detections < self.max_missed_detections:
-                    self.trajectories[t].missed_detections += 1
-                else:
-                    trajectories_to_remove.append(self.trajectories[t])
-                    
-        for t in trajectories_to_remove:
-            self.trajectories.remove(t)
-        
         # Add new trajectories for unmatched detections
         new_boxes = [detection.box for detection in detections]
         for d, det in enumerate(detections):
             if(d not in hungarian_matrix[:,1]):
                 t = trajectory(det.box, det.confidence, det.type)
                 self.trajectories.append(t)
-
-        return
-    
-    def get_matches(self):
-        '''
         
+        # Keep track of missed and consecutive detections, remove trajectories that have not been matched for a while
+        for t in self.trajectories:
+            if len(new_boxes) == 0:
+                if t.missed_detections >= self.max_missed_detections:
+                    self.trajectories.remove(t)
+                else:
+                    t.missed_detections += 1
+                    t.consecutive_detections = 0
+            elif not np.any(np.all(t.boxes[-1] == new_boxes, axis=1)):
+                if t.missed_detections >= self.max_missed_detections:
+                    self.trajectories.remove(t)
+                else:
+                    t.missed_detections += 1
+                    t.consecutive_detections = 0
+
+    def get_matches(self, min_consecutive_detections=min_consecutive_detections):
+        '''
+        Return bounding box information for trajectories with consecutive detections
         '''
 
         boxes, confidences, classes, colors = [], [], [], []
-        
         for t in self.trajectories:
-            if t.consecutive_detections >= 1:
+            if t.consecutive_detections >= min_consecutive_detections:
                 boxes.append(t.boxes[-1])
                 confidences.append(t.confidences[-1])
                 classes.append(t.type)
                 colors.append(t.color)
-        
+
         return boxes, confidences, classes, colors
 
     def print_matches(self):
