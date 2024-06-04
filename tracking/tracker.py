@@ -30,8 +30,10 @@ class video_editor:
         # Construct the path
         video_path = os.path.join(out_dir, filename)
 
+        self.width, self.height = width, height
+
         # Construct the video writer
-        self.out = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height), is_rgb)
+        self.out = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (self.width, self.height), is_rgb)
 
     def add_frame(self, img):
         '''
@@ -42,7 +44,7 @@ class video_editor:
         img : array(int)
             The image
         '''
-
+        img = cv2.resize(img, (self.width, self.height))
         self.out.write(img)
 
     def save_video(self):
