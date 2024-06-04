@@ -54,7 +54,7 @@ def main(video_path=None):
     video.save_video()
 
 if __name__ == '__main__':
-    for i in range(10):
-        video_path = random.choice(os.listdir('videos/test/'))
+    # Get a random test image (dataset used is BDD100k)
+    video_path = random.choice(os.listdir('videos/test/'))
 
     main('videos/test/{}'.format(video_path))

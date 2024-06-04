@@ -25,6 +25,10 @@ This script simply prints out a TensorFlow model summary which is used in the cu
 
 ### [tracker.py](tracking/tracker.py)
 
+https://github.com/holestine/IK/blob/main/tracking/out/video.mp4
+
+
+
 
 <video src="tracking/out/video.mp4" controls></video>
 
