@@ -1,8 +1,8 @@
 import cv2, os, random
 from ultralytics import YOLO
 import matplotlib.pyplot as plt
-from tracker import bb_tracker, video_editor
-
+from tracker import bb_tracker
+from video import video_editor
 
 def main(video_path=None):
 
@@ -21,7 +21,7 @@ def main(video_path=None):
     # Load the video and process it one frame at a time
     vidcap = cv2.VideoCapture(video_path)
     images_to_process, img = vidcap.read()
-    video = video_editor('out', 'video.mp4', width=img.shape[1], height=img.shape[0])
+    video = video_editor('out', 'video.mp4', width=int(img.shape[1]/4), height=int(img.shape[0]/4))
 
     while images_to_process:
 
@@ -36,11 +36,8 @@ def main(video_path=None):
 
         # Draw matches on the frame and add it to the video
         for box, confidence, type, color in zip(boxes, confidences, classes, colors):
-            left   = int(box[0])
-            top    = int(box[1])
-            right  = int(box[2])
-            bottom = int(box[3])
-            img = video.drawPred(yolo_result[0].names, img, type, confidence, left, top, right, bottom, color)
+            type = yolo_result[0].names[type]
+            img = video.drawPred(img, type, confidence, box, color)
         video.add_frame(img)
 
         images_to_process, img = vidcap.read()

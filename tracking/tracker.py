@@ -1,83 +1,26 @@
 import numpy as np
-import os, cv2
+import cv2
 from scipy.optimize import linear_sum_assignment
 
-class video_editor:
-    def __init__(self, out_dir, filename, fps=30, width=1200, height=800, is_rgb=True) -> None:
-        '''
-        Creates a video 
-    
-        Parameters
-        ----------
-        out_dir : str
-            The directory to store the video
-        filename : str
-            The name of the video
-        fps : int
-            The frames per second
-        width : int
-            The video width
-        height : int
-            The video height
-        is_rgb : bool
-            Flag to specify whether or not the video will be in color
-        '''
-
-        # Make sure directory is there
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
-
-        # Construct the path
-        video_path = os.path.join(out_dir, filename)
-
-        self.width, self.height = width, height
-
-        # Construct the video writer
-        self.out = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (self.width, self.height), is_rgb)
-
-    def add_frame(self, img):
-        '''
-        Adds a single frame to the video 
-    
-        Parameters
-        ----------
-        img : array(int)
-            The image
-        '''
-        img = cv2.resize(img, (self.width, self.height))
-        self.out.write(img)
-
-    def save_video(self):
-        '''
-        Saves the video
-        '''
-
-        self.out.release()
-
-    def drawPred(self, classes, frame, classId, conf, left, top, right, bottom, color=(255, 0, 0)):
-        '''
-        Draw a bounding box around a detected object given the box coordinates
-        Later, we could repurpose that to display an ID
-        '''
-
-        # Draw a bounding box.
-        cv2.rectangle(frame, (left, top), (right, bottom), color, thickness=5)
-        label = '%.2f' % conf
-        # Get the label for the class name and its confidence
-        if classes:
-            assert(classId < len(classes))
-            label = '%s:%s' % (classes[classId], label)
-
-        #Display the label at the top of the bounding box
-        labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
-        top = max(top, labelSize[1])
-        cv2.putText(frame, label, (left, top), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), thickness=3)
-        return frame
 
 class trajectory:
+
+    # Shared class variable
     current_id = 1
 
     def __init__(self, box, confidence, type) -> None:
+        """
+        Initializes parameters for a new trajectory
+
+        Parameters
+        ----------
+        box : array[4]
+            The bounding box
+        confidence : float
+            A value between 0 and 1 indicating confidence of the detection
+        type : int
+            A value that indicates the type of the detection (e.g., person, car ...)
+        """
 
         self.id = trajectory.current_id
         trajectory.current_id = self.id + 1
@@ -90,8 +33,12 @@ class trajectory:
 
     def id_to_color(self, id):
         """
-        Random function to convert an id to a color
-        Do what you want here but keep numbers below 255
+        Function to convert an id to a unique color
+
+        Parameters
+        ----------
+        id : int
+            The ID
         """
         blue  = id*107 % 256
         green = id*149 % 256
@@ -107,6 +54,7 @@ class yolo_detection:
 
 class bb_tracker:
     
+    #Constants
     confThreshold = 0.2
     nmsThreshold = 0.8
     iou_threshold = 0.3
@@ -118,6 +66,14 @@ class bb_tracker:
         self.trajectories = []
 
     def process_yolo_result(self, yolo_result):
+        '''
+        Incorporates the results from YOLO into the current trajectories
+    
+        Parameters
+        ----------
+        yolo_result : object
+            The decoded results from the YOLO model
+        '''
 
         # Get the bounding box locations and the associated classes and confidences
         boxes_xyxy  = yolo_result[0].boxes.xyxy.cpu().numpy()
@@ -127,23 +83,36 @@ class bb_tracker:
         # Filter out low confidence boxes
         filtered_boxes_xyxy  = boxes_xyxy[confidences > bb_tracker.confThreshold]
         filtered_confidences = confidences[confidences > bb_tracker.confThreshold]
-        filtered_classes     = classes[confidences > bb_tracker.confThreshold]
+        filtered_classes     = classes[confidences > bb_tracker.confThreshold].astype(int)
 
         # Perform Non Maximum Suppression to remove redundant boxes with low confidence
         indices = cv2.dnn.NMSBoxes(filtered_boxes_xyxy, filtered_confidences, bb_tracker.confThreshold, bb_tracker.nmsThreshold)
 
+        # Create list of valid detections
         detections = []
         for i in indices:
             detection = yolo_detection(filtered_boxes_xyxy[i], filtered_confidences[i], filtered_classes[i])
             detections.append(detection)
 
+        # Associate valid detections with the existing trajectories
         self.associate(detections)
 
     def box_iou(self, box1, box2):
+        '''
+        Determines the intersection over union of two bounding boxes
+    
+        Parameters
+        ----------
+        box1 : array[4]
+            The first box
+        box2 : array[4]
+            The second box
+        '''
+
         xA = max(box1[0], box2[0]) # The max left hand side
-        yA = max(box1[1], box2[1]) # The max of the top
+        yA = max(box1[1], box2[1]) # The max top
         xB = min(box1[2], box2[2]) # The min right hand side
-        yB = min(box1[3], box2[3]) # The min of the bottom
+        yB = min(box1[3], box2[3]) # The min bottom
 
         inter_area = max(0, xB - xA + 1) * max(0, yB - yA + 1) 
 
@@ -157,9 +126,14 @@ class bb_tracker:
         return iou
 
     def associate(self, detections):
-        """
-        
-        """
+        '''
+        Associates new detections with the existing trajectories
+    
+        Parameters
+        ----------
+        detections : list
+            A list of the new detections
+        '''
 
         # Nothing to match so just create new trajectories
         if len(self.trajectories) == 0:
@@ -200,6 +174,7 @@ class bb_tracker:
                 self.trajectories[h[0]].boxes.append(detections[h[1]].box)
                 self.trajectories[h[0]].consecutive_detections = max(1, self.trajectories[h[0]].consecutive_detections+1)
                 self.trajectories[h[0]].missed_detections = 0
+                self.trajectories[h[0]].confidences.append(detections[h[1]].confidence)
                
         # Add new trajectories for unmatched detections
         new_boxes = [detection.box for detection in detections]
@@ -220,6 +195,11 @@ class bb_tracker:
     def get_matches(self, min_consecutive_detections=min_consecutive_detections):
         '''
         Return bounding box information for trajectories with consecutive detections
+
+        Parameters
+        ----------
+        min_consecutive_detections : int
+            The minimum number of consecutive detections to be considered a match
         '''
 
         boxes, confidences, classes, colors = [], [], [], []
