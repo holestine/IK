@@ -22,3 +22,10 @@ This is a Jupyter notebook that shows how to create classification models using 
 ### [tf_cnn.py](tf_cnn/tf_cnn.py)
 
 This script simply prints out a TensorFlow model summary which is used in the curriculum to show the layers that are produced for different lines of code.
+
+### [tracker.py](tracking/tracker.py)
+
+
+<video src="tracking/out/video.mp4" controls></video>
+
+![non working video](tracking/out/video.mp4)

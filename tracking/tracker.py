@@ -105,13 +105,14 @@ class yolo_detection:
 
 class bb_tracker:
     
+    confThreshold = 0.2
+    nmsThreshold = 0.8
+    iou_threshold = 0.3
+    max_missed_detections = 30
     min_consecutive_detections = 3
     
     def __init__(self) -> None:
-        self.confThreshold = 0.2
-        self.nmsThreshold = 0.8
-        self.iou_threshold = 0.3
-        self.max_missed_detections = 3
+        
         self.trajectories = []
 
     def process_yolo_result(self, yolo_result):
@@ -122,12 +123,12 @@ class bb_tracker:
         classes     = yolo_result[0].boxes.cls.cpu().numpy()
 
         # Filter out low confidence boxes
-        filtered_boxes_xyxy  = boxes_xyxy[confidences > self.confThreshold]
-        filtered_confidences = confidences[confidences > self.confThreshold]
-        filtered_classes     = classes[confidences > self.confThreshold]
+        filtered_boxes_xyxy  = boxes_xyxy[confidences > bb_tracker.confThreshold]
+        filtered_confidences = confidences[confidences > bb_tracker.confThreshold]
+        filtered_classes     = classes[confidences > bb_tracker.confThreshold]
 
         # Perform Non Maximum Suppression to remove redundant boxes with low confidence
-        indices = cv2.dnn.NMSBoxes(filtered_boxes_xyxy, filtered_confidences, self.confThreshold, self.nmsThreshold)
+        indices = cv2.dnn.NMSBoxes(filtered_boxes_xyxy, filtered_confidences, bb_tracker.confThreshold, bb_tracker.nmsThreshold)
 
         detections = []
         for i in indices:
@@ -152,9 +153,6 @@ class bb_tracker:
         # Compute the IoU
         iou = inter_area/float(union_area)
         return iou
-
-    def remove_old_trajectories(self):
-        return
 
     def associate(self, detections):
         """
@@ -190,7 +188,7 @@ class bb_tracker:
         # Go through the matches in the Hungarian Matrix 
         for h in hungarian_matrix:
             # If it's under the IOU threshold increment the missed detections in the tracker and add a new trajectory
-            if iou_matrix[h[0],h[1]] < self.iou_threshold or self.trajectories[h[0]].type != detections[h[1]].type:
+            if iou_matrix[h[0],h[1]] < bb_tracker.iou_threshold or self.trajectories[h[0]].type != detections[h[1]].type:
                 self.trajectories[h[0]].missed_detections += 1
                 detection = detections[h[1]]
                 t = trajectory(detection.box, detection.confidence, detection.type)
@@ -210,14 +208,8 @@ class bb_tracker:
         
         # Keep track of missed and consecutive detections, remove trajectories that have not been matched for a while
         for t in self.trajectories:
-            if len(new_boxes) == 0:
-                if t.missed_detections >= self.max_missed_detections:
-                    self.trajectories.remove(t)
-                else:
-                    t.missed_detections += 1
-                    t.consecutive_detections = 0
-            elif not np.any(np.all(t.boxes[-1] == new_boxes, axis=1)):
-                if t.missed_detections >= self.max_missed_detections:
+            if len(new_boxes) == 0 or not np.any(np.all(t.boxes[-1] == new_boxes, axis=1)):
+                if t.missed_detections >= bb_tracker.max_missed_detections:
                     self.trajectories.remove(t)
                 else:
                     t.missed_detections += 1
@@ -262,7 +254,6 @@ class bb_tracker:
         for t in self.trajectories:
             if t.missed_detections > 0:
                 print(t.boxes[-1])
-                print('\n')
 
     def print_unmatched_detections(self):
         '''
@@ -275,5 +266,4 @@ class bb_tracker:
             if len(t.boxes) == 1:
                 if t.missed_detections == 0:
                     print(t.boxes[-1])
-                    print('\n')
 
