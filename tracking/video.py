@@ -84,8 +84,12 @@ class video_editor:
         label = "{}: {:.2f}".format(type, conf)
 
         # Display the label at the top of the bounding box
-        labelSize, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        scale = 1
+        thickness = 3
+        color = (255,255,255)
+        labelSize, _ = cv2.getTextSize(label, font, scale, thickness)
         top = max(top, labelSize[1])
-        cv2.putText(frame, label, (left, top), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), thickness=3)
+        cv2.putText(frame, label, (left, top), font, scale, color, thickness, cv2.LINE_AA)
 
         return frame
