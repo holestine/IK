@@ -169,3 +169,7 @@ data/
 logs/
 *.mp4
 *.p
+gen_voice/waves/
+key.py
+gen_voice/google_cloud_credentials.json
+timer*.csv
