@@ -9,3 +9,12 @@ vit_pytorch
 matplotlib
 tensorboard
 torch-tb-profiler
+
+# For Voice
+openai
+SpeechRecognition
+librosa
+soundfile
+gTTs
+ffmpeg
+#pyaudio
