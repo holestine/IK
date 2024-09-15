@@ -173,6 +173,8 @@ def test(model, device, test_loader, dataset, modeltype, writer, epoch):
     model.eval()
     test_loss = 0
     correct = 0
+    test_y = []
+    preds = []
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
@@ -183,6 +185,11 @@ def test(model, device, test_loader, dataset, modeltype, writer, epoch):
             test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
             correct += pred.eq(target.view_as(pred)).sum().item()
+
+            test_y.extend(target.cpu())
+            preds.extend([np.argmax(pred) for pred in output.cpu().numpy()])
+            print(f'Length: {len(test_y)}, Item 0: {test_y[0]}')
+            print(f'Length: {len(preds)}, Item 0: {preds[0]}')
 
     test_loss /= len(test_loader.dataset)
 
