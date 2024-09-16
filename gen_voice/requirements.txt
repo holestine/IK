@@ -1,0 +1,8 @@
+openai
+SpeechRecognition
+librosa
+soundfile
+gTTs
+ffmpeg
+pydub
+PyAudio

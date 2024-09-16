@@ -4,11 +4,11 @@ These are assets that I've created for [Interview Kickstart](https://learn.inter
 ## Create the environment
 
 ```
-conda create -c pytorch -c nvidia -n ik pytorch torchvision torchaudio pytorch-cuda=11.8
+conda create -c pytorch -c nvidia -n ik pytorch torchvision torchaudio pytorch-cuda=11.8 -y
 conda activate ik
 pip install -r requirements.txt
 ```
-
+ 
 ## Relevant Files
 
 ### [yolo.ipynb](yolo/yolo.ipynb 'yolo.ipynb')
@@ -25,5 +25,8 @@ This script simply prints out a TensorFlow model summary which is used in the cu
 
 ### [tracker.py](tracking/tracker.py)
 This code combines YOLO detections with the Hungarian algorithm to track objects.
-
 [![Watch the video](https://img.youtube.com/vi/e8OLSGrHxyA/hqdefault.jpg)](https://www.youtube.com/watch?v=e8OLSGrHxyA)
+
+### [text2speech2text.ipynb](gen_voice\text2speech2text.ipynb)
+This notebook does a couple experiments on generative voice and voice to text services.
+
