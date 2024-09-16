@@ -2,8 +2,8 @@ from ultralytics import YOLO
 from pathlib import Path
 import cv2
 import math
-best_yolo_model = 'runs/detect/yolov8n-object/weights/best.pt'
-image_folder = 'datasets/val/images/'
+best_yolo_model = 'yolo/runs/detect/yolov8n/weights/best.pt'
+image_folder = 'yolo/datasets/val/images/'
 image_ext = '*.jpg'
 
 def show_image(path, title='unknown', boxes=[], classes=[]):
