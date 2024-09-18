@@ -75,7 +75,11 @@ class ChatBot:
 
 
 if __name__ == "__main__":
+    # Full Audio
     chatbot = ChatBot(mic_id=2, enable_speakers=True)
+
+    # No Audio
+    #chatbot = ChatBot(enable_speakers=False)
 
     human_prompt = ""
     while human_prompt != 'goodbye':
