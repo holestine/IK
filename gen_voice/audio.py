@@ -18,16 +18,16 @@ class Audio:
         self.mic_enabled = True
 
     def communicate(self, phrase):
-        #temp_file = 'temp.mp3'
-        #gTTS(phrase).save(temp_file)
-        #audio = AudioSegment.from_mp3(temp_file)
-        #play(audio)
-        #os.remove(temp_file)
+        temp_file = 'temp.mp3'
+        gTTS(phrase).save(temp_file)
+        audio = AudioSegment.from_mp3(temp_file)
+        play(audio)
+        os.remove(temp_file)
 
-        # Option without temporary mp3
-        engine = pyttsx3.init()
-        engine.say(phrase)
-        engine.runAndWait()
+        # Option without temporary mp3 but it's more robotic
+        #engine = pyttsx3.init()
+        #engine.say(phrase)
+        #engine.runAndWait()
 
     def recognize_speech_from_mic(self):
         """ Transcribe speech from the microphone
