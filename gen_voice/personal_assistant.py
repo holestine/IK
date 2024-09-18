@@ -1,9 +1,9 @@
-from audio import Audio
+#from audio import Audio
 from chatbot import ChatBot
 import gradio as gr
 
 # Initialize the chatbot
-chatbot = ChatBot(2)
+chatbot = ChatBot()
 
 
 with gr.Blocks() as demo:

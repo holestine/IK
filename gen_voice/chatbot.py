@@ -9,8 +9,10 @@ class ChatBot:
 
         if (mic_id is not None):
             self.initialize_microphone(mic_id)
-
-        self.__context = [ {'role':'system', 'content':""" \
+        else:
+            self.audio = None
+        
+        self.llm_prompt = {'role':'system', 'content':""" \
                     You are an OrderBot, an automated service to collect orders for a pizza restaurant. \
                     You first greet the customer, then collect the order and then ask if it's a pickup or delivery. \
                     You wait to collect the entire order, then summarize it and check for a final time if the customer wants to add anything else. \
@@ -36,17 +38,21 @@ class ChatBot:
                     coke 3.00, 2.00, 1.00 \
                     sprite 3.00, 2.00, 1.00 \
                     bottled water 5.00 \
-                    """} ]  # accumulate messages
+                    """}
         
     def get_completion_from_messages(self, messages, model="gpt-4-turbo", temperature=0):
         response = self.__client.chat.completions.create(model=model, messages=messages, temperature=temperature)
         return response.choices[0].message.content
     
     def respond(self, prompt, history=None):
-        print(history)
-        self.__context.append({'role':'user', 'content':f"{prompt}"})
-        response = self.get_completion_from_messages(self.__context) 
-        self.__context.append({'role':'assistant', 'content':f"{response}"})
+        context = [self.llm_prompt]
+        for interaction in history:
+            context.append({'role':'user', 'content':f"{interaction[0]}"})
+            context.append({'role':'assistant', 'content':f"{interaction[1]}"})
+
+        context.append({'role':'user', 'content':f"{prompt}"})
+        response = self.get_completion_from_messages(context)
+        context.append({'role':'assistant', 'content':f"{response}"})
 
         if (self.audio is not None):
             self.audio.communicate(response)
