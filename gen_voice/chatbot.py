@@ -4,13 +4,15 @@ from key import openai_key
 
 class ChatBot:
 
-    def __init__(self, mic_id=None) -> None:
+    def __init__(self, mic_id=None, enable_speakers=False) -> None:
         self.__client = OpenAI(api_key=openai_key)
+
+        self.__enable_speakers = enable_speakers
+
+        self.audio = Audio()
 
         if (mic_id is not None):
             self.initialize_microphone(mic_id)
-        else:
-            self.audio = None
         
         self.llm_prompt = {'role':'system', 'content':""" \
                     You are an OrderBot, an automated service to collect orders for a pizza restaurant. \
@@ -44,7 +46,7 @@ class ChatBot:
         response = self.__client.chat.completions.create(model=model, messages=messages, temperature=temperature)
         return response.choices[0].message.content
     
-    def respond(self, prompt, history=None):
+    def respond(self, prompt, history=[]):
         context = [self.llm_prompt]
         for interaction in history:
             context.append({'role':'user', 'content':f"{interaction[0]}"})
@@ -54,7 +56,7 @@ class ChatBot:
         response = self.get_completion_from_messages(context)
         context.append({'role':'assistant', 'content':f"{response}"})
 
-        if (self.audio is not None):
+        if (self.__enable_speakers):
             self.audio.communicate(response)
        
         return response
@@ -62,14 +64,21 @@ class ChatBot:
     def initialize_microphone(self, mic_id):
         # Initialize microphone object with the appropriate device from the list above. 
         # For best results a headset with a mic is recommended.
-        self.audio = Audio()
+        
         self.audio.initialize_microphone(mic_id)
 
+    def recognize_speech_from_mic(self):
+        return self.audio.recognize_speech_from_mic()
+    
+    def communicate(self, message):
+        self.audio.communicate(message)
+
+
 if __name__ == "__main__":
-    chatbot = ChatBot(2)
+    chatbot = ChatBot(mic_id=2, enable_speakers=True)
 
     human_prompt = ""
-    while human_prompt != 'done':
+    while human_prompt != 'goodbye':
         response = chatbot.respond(human_prompt)
         human_prompt = input(f"\n{response}\n\n")
         

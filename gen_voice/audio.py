@@ -3,29 +3,31 @@ import speech_recognition as sr
 from gtts import gTTS
 from pydub import AudioSegment
 from pydub.playback import play
+import pyttsx3
 
 class Audio:
 
     def __init__(self) -> None:
         # Initialize speech recognition object
         self.recognizer = sr.Recognizer()
+        self.mic_enabled = False
 
     def initialize_microphone(self, device_index):
         # Initialize microphone object with appropriate device
-        self.microphone = sr.Microphone(device_index=2)
+        self.microphone = sr.Microphone(device_index)
+        self.mic_enabled = True
 
     def communicate(self, phrase):
-        temp_file = 'temp.mp3'
-        gTTS(phrase).save(temp_file)
-        audio = AudioSegment.from_mp3(temp_file)
-        play(audio)
-        os.remove(temp_file)
+        #temp_file = 'temp.mp3'
+        #gTTS(phrase).save(temp_file)
+        #audio = AudioSegment.from_mp3(temp_file)
+        #play(audio)
+        #os.remove(temp_file)
 
         # Option without temporary mp3
-        #import pyttsx3
-        #engine = pyttsx3.init()
-        #engine.say("I will speak this text")
-        #engine.runAndWait()
+        engine = pyttsx3.init()
+        engine.say(phrase)
+        engine.runAndWait()
 
     def recognize_speech_from_mic(self):
         """ Transcribe speech from the microphone

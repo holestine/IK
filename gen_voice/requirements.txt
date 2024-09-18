@@ -8,3 +8,4 @@ pydub
 PyAudio
 pyttsx3
 gradio
+ipykernel
