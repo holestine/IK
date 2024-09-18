@@ -6,3 +6,5 @@ gTTs
 ffmpeg
 pydub
 PyAudio
+pyttsx3
+gradio

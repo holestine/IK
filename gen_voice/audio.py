@@ -21,6 +21,12 @@ class Audio:
         play(audio)
         os.remove(temp_file)
 
+        # Option without temporary mp3
+        #import pyttsx3
+        #engine = pyttsx3.init()
+        #engine.say("I will speak this text")
+        #engine.runAndWait()
+
     def recognize_speech_from_mic(self):
         """ Transcribe speech from the microphone
 

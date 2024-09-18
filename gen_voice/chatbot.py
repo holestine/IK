@@ -1,10 +1,14 @@
 from openai import OpenAI
+from audio import Audio
 from key import openai_key
 
 class ChatBot:
 
-    def __init__(self) -> None:
+    def __init__(self, mic_id=None) -> None:
         self.__client = OpenAI(api_key=openai_key)
+
+        if (mic_id is not None):
+            self.initialize_microphone(mic_id)
 
         self.__context = [ {'role':'system', 'content':""" \
                     You are an OrderBot, an automated service to collect orders for a pizza restaurant. \
@@ -38,14 +42,25 @@ class ChatBot:
         response = self.__client.chat.completions.create(model=model, messages=messages, temperature=temperature)
         return response.choices[0].message.content
     
-    def respond(self, prompt):
+    def respond(self, prompt, history=None):
+        print(history)
         self.__context.append({'role':'user', 'content':f"{prompt}"})
         response = self.get_completion_from_messages(self.__context) 
         self.__context.append({'role':'assistant', 'content':f"{response}"})
+
+        if (self.audio is not None):
+            self.audio.communicate(response)
+       
         return response
+    
+    def initialize_microphone(self, mic_id):
+        # Initialize microphone object with the appropriate device from the list above. 
+        # For best results a headset with a mic is recommended.
+        self.audio = Audio()
+        self.audio.initialize_microphone(mic_id)
 
 if __name__ == "__main__":
-    chatbot = ChatBot()
+    chatbot = ChatBot(2)
 
     human_prompt = ""
     while human_prompt != 'done':
