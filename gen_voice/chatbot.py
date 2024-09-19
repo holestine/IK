@@ -5,11 +5,12 @@ import threading
 
 class ChatBot:
 
-    def __init__(self, mic_id=None, enable_speakers=False) -> None:
+    def __init__(self, mic_id=None, enable_speakers=False, threaded=False) -> None:
         '''
         Initialize the chatbot
         mic_id:          The index of the mic to enable
         enable_speakers: Wether or not audio will be played
+        threaded:        Plays back audio in seperate thread, can interfere with speech detector
         '''
         
         # Get Open AI client
@@ -17,6 +18,9 @@ class ChatBot:
 
         # Whether or not to use speakers
         self.__enable_speakers = enable_speakers
+
+        # Whether or not to thread playback
+        self.__threaded = threaded
 
         # Initialize audio library
         self.audio = Audio()
@@ -75,11 +79,13 @@ class ChatBot:
         context.append({'role':'assistant', 'content':f"{response}"})
 
         if (self.__enable_speakers):
-            apeaker_thread = threading.Thread(target=self.audio.communicate, args=(response,))
-            apeaker_thread.start()
-
+            # With threads
+            if (self.__threaded):
+                speaker_thread = threading.Thread(target=self.audio.communicate, args=(response,))
+                speaker_thread.start()
             # Without threads
-            #self.audio.communicate(response)
+            else:
+                self.audio.communicate(response)
        
         return response
     
