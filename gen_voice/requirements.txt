@@ -9,3 +9,5 @@ PyAudio
 pyttsx3
 gradio
 ipykernel
+langchain-community
+playwright
