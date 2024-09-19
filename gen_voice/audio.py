@@ -10,6 +10,8 @@ class Audio:
     def __init__(self) -> None:
         # Initialize speech recognition object
         self.recognizer = sr.Recognizer()
+
+        # Disable mic by default
         self.mic_enabled = False
 
     def initialize_microphone(self, device_index):
@@ -18,6 +20,7 @@ class Audio:
         self.mic_enabled = True
 
     def communicate(self, phrase):
+        # Audio approach that to file and then play it. Could be sped up by doing a setence at a time.
         temp_file = 'temp.mp3'
         gTTS(phrase).save(temp_file)
         audio = AudioSegment.from_mp3(temp_file)
@@ -30,12 +33,12 @@ class Audio:
         #engine.runAndWait()
 
     def recognize_speech_from_mic(self):
-        """ Transcribe speech from the microphone
+        """ Transcribes speech from a microphone
 
-        Returns a dictionary with three keys:
-        "success": a boolean indicating whether or not the API request was successful
-        "error": `None` if no error occured, otherwise a string containing an error message if the API could not be reached or speech was unrecognizable
-        "transcription": A string containing the transcribed text or `None` if speech was unrecognizable
+        Returns a dictionary with the following keys:
+            "success":       A boolean indicating whether or not the request was successful
+            "error":         'None' if successful, otherwise a string containing an error message
+            "transcription": A string containing the transcribed text or 'None' if speech was unrecognizable
         """
 
         # Adjust the recognizer sensitivity for ambient noise and listen to the microphone
@@ -50,7 +53,7 @@ class Audio:
             "transcription": None
         }
 
-        # Try to recognize the speech if a RequestError or UnknownValueError exception is caught update the response object accordingly
+        # Try to recognize the speech and handle exceptions accordingly
         try:
             response["transcription"] = self.recognizer.recognize_google(audio)
         except sr.RequestError:
@@ -58,7 +61,7 @@ class Audio:
             response["success"] = False
             response["error"] = "API unavailable"
         except sr.UnknownValueError:
-            # speech was unintelligible
+            # Speech was unintelligible
             response["success"] = False
             response["error"] = "Unable to recognize speech"
 

@@ -1,19 +1,31 @@
 from openai import OpenAI
 from audio import Audio
 from key import openai_key
+import threading
 
 class ChatBot:
 
     def __init__(self, mic_id=None, enable_speakers=False) -> None:
+        '''
+        Initialize the chatbot
+        mic_id:          The index of the mic to enable
+        enable_speakers: Wether or not audio will be played
+        '''
+        
+        # Get Open AI client
         self.__client = OpenAI(api_key=openai_key)
 
+        # Whether or not to use speakers
         self.__enable_speakers = enable_speakers
 
+        # Initialize audio library
         self.audio = Audio()
 
+        # Initialize mic
         if (mic_id is not None):
             self.initialize_microphone(mic_id)
         
+        # Prompt to initialize LLM
         self.llm_prompt = {'role':'system', 'content':""" \
                     You are an OrderBot, an automated service to collect orders for a pizza restaurant. \
                     You first greet the customer, then collect the order and then ask if it's a pickup or delivery. \
@@ -43,10 +55,16 @@ class ChatBot:
                     """}
         
     def get_completion_from_messages(self, messages, model="gpt-4-turbo", temperature=0):
+        '''
+        Send the message to the specified OpenAI model
+        '''
         response = self.__client.chat.completions.create(model=model, messages=messages, temperature=temperature)
         return response.choices[0].message.content
     
     def respond(self, prompt, history=[]):
+        '''
+        Get a response based on the current history
+        '''
         context = [self.llm_prompt]
         for interaction in history:
             context.append({'role':'user', 'content':f"{interaction[0]}"})
@@ -57,20 +75,32 @@ class ChatBot:
         context.append({'role':'assistant', 'content':f"{response}"})
 
         if (self.__enable_speakers):
-            self.audio.communicate(response)
+            apeaker_thread = threading.Thread(target=self.audio.communicate, args=(response,))
+            apeaker_thread.start()
+
+            # Without threads
+            #self.audio.communicate(response)
        
         return response
     
     def initialize_microphone(self, mic_id):
-        # Initialize microphone object with the appropriate device from the list above. 
-        # For best results a headset with a mic is recommended.
-        
+        ''' 
+        Initialize microphone object with the indicated ID. For best results a headset with a mic is recommended.
+        '''
         self.audio.initialize_microphone(mic_id)
 
     def recognize_speech_from_mic(self):
+        '''
+        Listens for speech
+        return: The text of the captured speech
+        '''
         return self.audio.recognize_speech_from_mic()
     
     def communicate(self, message):
+        '''
+        Plays a message on the speakers
+        message: the message
+        '''
         self.audio.communicate(message)
 
 
