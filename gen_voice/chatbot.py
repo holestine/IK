@@ -112,13 +112,16 @@ class ChatBot:
 
 if __name__ == "__main__":
     # Full Audio
-    chatbot = ChatBot(mic_id=2, enable_speakers=True)
+    #chatbot = ChatBot(mic_id=2, enable_speakers=True)
 
     # No Audio
-    #chatbot = ChatBot(enable_speakers=False)
+    chatbot = ChatBot(enable_speakers=False)
+
+    history = []
 
     human_prompt = ""
     while human_prompt != 'goodbye':
-        response = chatbot.respond(human_prompt)
+        response = chatbot.respond(human_prompt, history)
+        history.append([human_prompt, response])
         human_prompt = input(f"\n{response}\n\n")
         
