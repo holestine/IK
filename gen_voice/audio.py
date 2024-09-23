@@ -8,19 +8,26 @@ import pyttsx3
 class Audio:
 
     def __init__(self) -> None:
-        # Initialize speech recognition object
+        """ Initialize speech recognition object
+        """ 
         self.recognizer = sr.Recognizer()
 
         # Disable mic by default
         self.mic_enabled = False
 
     def initialize_microphone(self, device_index):
-        # Initialize microphone object with appropriate device
+        """ Initialize microphone object with appropriate device
+
+        device_index: int indicating the index of the microphone
+        """
         self.microphone = sr.Microphone(device_index)
         self.mic_enabled = True
 
-    def communicate(self, phrase):
-        # Audio approach that to file and then play it. Could be sped up by doing a setence at a time.
+    def communicate(self, phrase='You forgot to pass the text'):
+        """ Audio approach that saves to a file and then plays it. Could be sped up by doing a sentence at a time.
+
+        phrase: the string to convert to speech
+        """
         temp_file = 'temp.mp3'
         gTTS(phrase).save(temp_file)
         audio = AudioSegment.from_mp3(temp_file)
