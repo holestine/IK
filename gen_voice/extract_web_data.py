@@ -5,30 +5,24 @@ from langchain_community.document_loaders import AsyncChromiumLoader
 import os
 os.environ['USER_AGENT'] = 'myagent'
 
-def extract_webpage_data(urls, tags=["h3", "p"]):
-    
-    # Load HTML content using AsyncChromiumLoader
-    loader = AsyncChromiumLoader(urls)
-    docs = loader.load()
+# Modify these to include sites with relevant data
+urls = [
+#    'https://www.forbes.com/advisor/business/call-center-analytics/#what_are_call_center_analytics_section',
+#    'https://www.kaggle.com/datasets/satvicoder/call-center-data'
+#    'https://www.kaggle.com/datasets/basharath123/call-center-dataset'
+#    'https://www.convoso.com/blog/call-center-analytics/'
+#    'https://docs.google.com/document/d/1rU1Pzymku_o1zjNVDwLT_XlRnyqfiybE4LHMbWQLqnc/edit#heading=h.mf6wf5777le'
 
-    # Transform the loaded HTML using BeautifulSoupTransformer
-    bs_transformer = BeautifulSoupTransformer()
-    docs_transformed = bs_transformer.transform_documents(
-        docs, tags_to_extract=tags
-    )
-
-    return [doc.page_content for doc in docs_transformed]
-
-urls = ['https://zerodha.com/varsity/chapter/supplementary-note-the-20-market-depth/',
+        'https://zerodha.com/varsity/chapter/supplementary-note-the-20-market-depth/',
         'https://zerodha.com/varsity/chapter/key-events-and-their-impact-on-markets/',
         'https://zerodha.com/varsity/chapter/momentum-portfolios/',
-#        'https://zerodha.com/varsity/chapter/sector-analysis-overview/',
-#        'https://zerodha.com/varsity/chapter/cement/',
-#        'https://zerodha.com/varsity/chapter/episode-1-ideas-by-the-lake/',
-#        'https://zerodha.com/varsity/chapter/why-do-stock-prices-fluctuate/',
-#        'https://zerodha.com/varsity/chapter/why-should-you-invest/',
-#        'https://zerodha.com/varsity/chapter/who-are-the-different-actors-in-market/',
-#        'https://zerodha.com/varsity/chapter/why-and-how-do-companies-list-and-what-is-an-ipo/',
+        'https://zerodha.com/varsity/chapter/sector-analysis-overview/',
+        'https://zerodha.com/varsity/chapter/cement/',
+        'https://zerodha.com/varsity/chapter/episode-1-ideas-by-the-lake/',
+        'https://zerodha.com/varsity/chapter/why-do-stock-prices-fluctuate/',
+        'https://zerodha.com/varsity/chapter/why-should-you-invest/',
+        'https://zerodha.com/varsity/chapter/who-are-the-different-actors-in-market/',
+        'https://zerodha.com/varsity/chapter/why-and-how-do-companies-list-and-what-is-an-ipo/',
 #        'https://zerodha.com/varsity/chapter/understanding-corporate-actions-like-dividends-bonuses-and-buybacks/',
 #        'https://zerodha.com/varsity/chapter/understanding-the-various-order-types/',
 #        'https://zerodha.com/varsity/chapter/getting-started-2/',
@@ -118,9 +112,23 @@ urls = ['https://zerodha.com/varsity/chapter/supplementary-note-the-20-market-de
 #        'https://zerodha.com/varsity/chapter/turnover-balance-sheet-and-pl/',
 #        'https://zerodha.com/varsity/chapter/itr-forms/'
 ]
-    
-if __name__ == "__main__":
-    data = ''.join(str(x+'\n\n') for x in extract_webpage_data(urls))
 
-    with open('data.txt', 'w', encoding="utf-8") as file:
+def extract_webpage_data(urls=urls, out_file="data.txt", tags=["h1", "h2", "h3", "p"]):
+    
+    # Load HTML content using AsyncChromiumLoader
+    loader = AsyncChromiumLoader(urls)
+    docs = loader.load()
+
+    # Transform the loaded HTML using BeautifulSoupTransformer
+    bs_transformer = BeautifulSoupTransformer()
+    docs_transformed = bs_transformer.transform_documents(
+        docs, tags_to_extract=tags
+    )
+
+    data = [doc.page_content for doc in docs_transformed]
+    data = ''.join(str(x+'\n\n') for x in data)
+    with open(out_file, 'w', encoding="utf-8") as file:
         file.write(data)
+
+if __name__ == "__main__":
+    extract_webpage_data()
