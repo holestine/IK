@@ -173,5 +173,5 @@ gen_voice/waves/
 gen_voice/google_cloud_credentials.json
 timer*.csv
 gen_voice/key.py
-gen_voice/archive
-
+gen_voice/archive/waves
+gen_voice/data.txt
