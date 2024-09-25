@@ -2,8 +2,15 @@ import os
 import speech_recognition as sr
 from gtts import gTTS
 from pydub import AudioSegment
+# If having trouble with ffmpeg, setting these may help
+#AudioSegment.converter = "C:\\ffmpeg\\ffmpeg\\bin\\ffmpeg.exe"
+#AudioSegment.ffmpeg    = "C:\\ffmpeg\\ffmpeg\\bin\\ffmpeg.exe"
+#AudioSegment.ffprobe   = "C:\\ffmpeg\\ffmpeg\\bin\\ffprobe.exe"
 from pydub.playback import play
 import pyttsx3
+import numpy as np
+from transformers import pipeline
+import torch
 
 class Audio:
 
@@ -75,6 +82,28 @@ class Audio:
             response["error"] = "Unable to recognize speech"
 
         return response
+    
+    def get_prompt_from_gradio_audio(self, audio):
+        '''
+        Converts audio captured from gradio to text. See https://www.gradio.app/guides/real-time-speech-recognition for more info.
+        audio: object containing sampling frequency and raw audio data
+        
+        '''
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        transcriber = pipeline("automatic-speech-recognition", model="openai/whisper-base.en", device=device)
+
+        sr, y = audio
+        
+        # Convert to mono if stereo
+        if y.ndim > 1:
+            y = y.mean(axis=1)
+            
+        y = y.astype(np.float32)
+        y /= np.max(np.abs(y))
+
+        prompt = transcriber({"sampling_rate": sr, "raw": y})["text"]  
+
+        return prompt
 
 if __name__ == "__main__":
     audio = Audio()

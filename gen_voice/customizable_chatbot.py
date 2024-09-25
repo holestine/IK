@@ -2,9 +2,6 @@ from openai import OpenAI
 from audio import Audio
 from key import openai_key
 import threading
-import numpy as np
-from transformers import pipeline
-import torch
 
 financial_prompt = "You are a financial assistant for question-answering tasks. Use the following pieces of \
     retrieved context to answer the question. If you don't know the answer, say that you don't know. Use three \
@@ -96,34 +93,20 @@ class ChatBot:
         '''
         self.audio.communicate(message)
 
-    def get_prompt_from_audio(self, audio):
+    def get_prompt_from_gradio_audio(self, audio):
         '''
-        Converts audio captured from gradio to text
+        Converts audio captured from gradio to text. See https://www.gradio.app/guides/real-time-speech-recognition for more info.
         audio: object containing sampling frequency and raw audio data
         '''
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        transcriber = pipeline("automatic-speech-recognition", model="openai/whisper-base.en", device=device)
 
-        sr, y = audio
+        return self.audio.get_prompt_from_gradio_audio(audio)
         
-        # Convert to mono if stereo
-        if y.ndim > 1:
-            y = y.mean(axis=1)
-            
-        y = y.astype(np.float32)
-        y /= np.max(np.abs(y))
-
-        prompt = transcriber({"sampling_rate": sr, "raw": y})["text"]  
-
-        return prompt
-
-
 if __name__ == "__main__":
-    # Full Audio
-    #chatbot = ChatBot(mic_id=2, enable_speakers=True)
+    # With Speakers
+    chatbot = ChatBot(enable_speakers=True)
 
     # No Audio
-    chatbot = ChatBot(enable_speakers=False)
+    #chatbot = ChatBot(enable_speakers=False)
 
     history = []
     human_prompt = ""

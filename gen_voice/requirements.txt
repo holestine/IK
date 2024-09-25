@@ -7,13 +7,12 @@ librosa
 soundfile
 gTTs
 ffmpeg
+ffmpeg-python
 pydub
 PyAudio
 pyttsx3
 gradio
 ipykernel
 langchain-community
-playwright
 transformers
-static-ffmpeg
 jupyter
