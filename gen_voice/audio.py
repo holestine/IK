@@ -28,16 +28,18 @@ class Audio:
 
         phrase: the string to convert to speech
         """
-        temp_file = 'temp.mp3'
-        gTTS(phrase).save(temp_file)
-        audio = AudioSegment.from_mp3(temp_file)
-        play(audio)
-        os.remove(temp_file)
 
-        # Option without temporary mp3 but it's more robotic
-        #engine = pyttsx3.init()
-        #engine.say(phrase)
-        #engine.runAndWait()
+        try: 
+            temp_file = 'temp.mp3'
+            gTTS(phrase).save(temp_file)
+            audio = AudioSegment.from_mp3(temp_file)
+            play(audio)
+            os.remove(temp_file)
+        except:
+            # Option without temporary mp3 but it's more robotic
+            engine = pyttsx3.init()
+            engine.say(phrase)
+            engine.runAndWait()
 
     def recognize_speech_from_mic(self):
         """ Transcribes speech from a microphone
@@ -77,9 +79,10 @@ class Audio:
 if __name__ == "__main__":
     audio = Audio()
     
-    sr.Microphone.list_microphone_names()
+    for i, mic in enumerate(sr.Microphone.list_microphone_names()):
+        print(f"{i}: {mic}")
 
-    audio.initialize_microphone(2)
+    audio.initialize_microphone(1)
 
     audio.communicate("Hello")
 
