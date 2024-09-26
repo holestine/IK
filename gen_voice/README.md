@@ -52,7 +52,7 @@
 
 ## Launch Notebook
 
-Run the command below from the virtual environment to launch this notebook in a browser then continue executing the cells below.
+Run the command below from the virtual environment to launch [assistant.ipynb](assistant.ipynb) in a browser then continue executing the cells below.
 
 ``` bash
 jupyter notebook assistant.ipynb
