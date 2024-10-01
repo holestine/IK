@@ -100,6 +100,14 @@ class ChatBot:
         '''
 
         return self.audio.get_prompt_from_gradio_audio(audio)
+    
+    def get_prompt_from_file(self, file):
+        '''
+        Converts audio from a file to text.
+        file: the path to the audio file
+        '''
+
+        return self.audio.get_prompt_from_file(file)
         
 if __name__ == "__main__":
     # With Speakers
