@@ -16,3 +16,4 @@ ipykernel
 langchain-community
 transformers
 jupyter
+playwright
